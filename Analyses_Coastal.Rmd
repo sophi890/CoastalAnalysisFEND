@@ -72,3 +72,101 @@ model.indicator.deaths = glmer(deaths ~ (1|state) + factor(indicatorcoast) + off
 summary(model.indicator.deaths)
 ```
 
+## Repeat above, - humidity
+```{r}
+# Model cases
+model.initial.cases.nohumidity = glmer(cases ~ (1|state) + coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.only)
+summary(model.initial.cases.nohumidity)
+
+# Model deaths
+model.initial.deaths.nohumidity = glmer(deaths ~ (1|state) + coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.only)
+summary(model.initial.deaths.nohumidity)
+```
+
+```{r}
+# Model cases
+model.indicator.cases.nohumidity = glmer(cases ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
+summary(model.indicator.cases.nohumidity)
+
+# Model deaths
+model.indicator.deaths.nohumidity = glmer(deaths ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
+summary(model.indicator.deaths.nohumidity)
+```
+
+## Summary of output
+```{r echo = F}
+paste(signif(summary(model.initial.cases)$coefficients[2,1],2), " (", signif(summary(model.initial.cases)$coefficients[2,1] - 1.96*summary(model.initial.cases)$coefficients[2,2],2), ", ", signif(summary(model.initial.cases)$coefficients[2,1] + 1.96*summary(model.initial.cases)$coefficients[2,2],2), ")", sep = "")
+
+paste(signif(summary(model.initial.cases)$coefficients[3,1],2), " (", signif(summary(model.initial.cases)$coefficients[3,1] - 1.96*summary(model.initial.cases)$coefficients[3,2],2), ", ", signif(summary(model.initial.cases)$coefficients[3,1] + 1.96*summary(model.initial.cases)$coefficients[3,2],2), ")", sep = "")
+
+paste(signif(summary(model.initial.deaths)$coefficients[2,1],2), " (", signif(summary(model.initial.deaths)$coefficients[2,1] - 1.96*summary(model.initial.deaths)$coefficients[2,2],2), ", ", signif(summary(model.initial.deaths)$coefficients[2,1] + 1.96*summary(model.initial.deaths)$coefficients[2,2],2), ")", sep = "")
+
+paste(signif(summary(model.initial.deaths)$coefficients[3,1],2), " (", signif(summary(model.initial.deaths)$coefficients[3,1] - 1.96*summary(model.initial.deaths)$coefficients[3,2],2), ", ", signif(summary(model.initial.deaths)$coefficients[3,1] + 1.96*summary(model.initial.deaths)$coefficients[3,2],2), ")", sep = "")
+
+paste(signif(summary(model.initial.cases.nohumidity)$coefficients[2,1],2), " (", signif(summary(model.initial.cases.nohumidity)$coefficients[2,1] - 1.96*summary(model.initial.cases.nohumidity)$coefficients[2,2],2), ", ", signif(summary(model.initial.cases.nohumidity)$coefficients[2,1] + 1.96*summary(model.initial.cases.nohumidity)$coefficients[2,2],2), ")", sep = "")
+
+paste(signif(summary(model.initial.cases.nohumidity)$coefficients[3,1],2), " (", signif(summary(model.initial.cases.nohumidity)$coefficients[3,1] - 1.96*summary(model.initial.cases.nohumidity)$coefficients[3,2],2), ", ", signif(summary(model.initial.cases.nohumidity)$coefficients[3,1] + 1.96*summary(model.initial.cases.nohumidity)$coefficients[3,2],2), ")", sep = "")
+
+paste(signif(summary(model.initial.deaths.nohumidity)$coefficients[2,1],2), " (", signif(summary(model.initial.deaths.nohumidity)$coefficients[2,1] - 1.96*summary(model.initial.deaths.nohumidity)$coefficients[2,2],2), ", ", signif(summary(model.initial.deaths.nohumidity)$coefficients[2,1] + 1.96*summary(model.initial.deaths.nohumidity)$coefficients[2,2],2), ")", sep = "")
+
+paste(signif(summary(model.initial.deaths.nohumidity)$coefficients[3,1],2), " (", signif(summary(model.initial.deaths.nohumidity)$coefficients[3,1] - 1.96*summary(model.initial.deaths.nohumidity)$coefficients[3,2],2), ", ", signif(summary(model.initial.deaths.nohumidity)$coefficients[3,1] + 1.96*summary(model.initial.deaths.nohumidity)$coefficients[3,2],2), ")", sep = "")
+
+paste(signif(summary(model.indicator.cases)$coefficients[2,1],2), " (", signif(summary(model.indicator.cases)$coefficients[2,1] - 1.96*summary(model.indicator.cases)$coefficients[2,2],2), ", ", signif(summary(model.indicator.cases)$coefficients[2,1] + 1.96*summary(model.indicator.cases)$coefficients[2,2],2), ")", sep = "")
+
+
+paste(signif(summary(model.indicator.deaths)$coefficients[2,1],2), " (", signif(summary(model.indicator.deaths)$coefficients[2,1] - 1.96*summary(model.indicator.deaths)$coefficients[2,2],2), ", ", signif(summary(model.indicator.deaths)$coefficients[2,1] + 1.96*summary(model.indicator.deaths)$coefficients[2,2],2), ")", sep = "")
+
+paste(signif(summary(model.indicator.cases.nohumidity)$coefficients[2,1],2), " (", signif(summary(model.indicator.cases.nohumidity)$coefficients[2,1] - 1.96*summary(model.indicator.cases.nohumidity)$coefficients[2,2],2), ", ", signif(summary(model.indicator.cases.nohumidity)$coefficients[2,1] + 1.96*summary(model.indicator.cases.nohumidity)$coefficients[2,2],2), ")", sep = "")
+
+paste(signif(summary(model.indicator.deaths.nohumidity)$coefficients[2,1],2), " (", signif(summary(model.indicator.deaths.nohumidity)$coefficients[2,1] - 1.96*summary(model.indicator.deaths.nohumidity)$coefficients[2,2],2), ", ", signif(summary(model.indicator.deaths.nohumidity)$coefficients[2,1] + 1.96*summary(model.indicator.deaths.nohumidity)$coefficients[2,2],2), ")", sep = "")
+```
+\begin{center}
+\begin{tabular}{ c| c | c }
+ \multicolumn{3}{c}{\textbf{ Humidity Included}} \\
+ \hline
+ Coastal Distance & Case Model Coefficients (CI) & Death Model Coefficients (CI) \\
+ \hline
+ 1 (Reference) &  0  &  0 \\ 
+ 2 & -0.0083 (-0.0099, -0.0068) & 0.042 (0.031, 0.053)\\  
+ 3 & 0.0033 (0.0013, 0.0053) & 0.024 (0.0091, 0.038)
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{ c| c | c }
+ \multicolumn{3}{c}{\textbf{ Humidity Excluded}} \\
+ \hline
+ Coastal Distance & Case Model Coefficients (CI) & Death Model Coefficients (CI) \\
+ \hline
+ 1 (Reference) & 0  &  0 \\ 
+ 2 & 0.013 (0.011, 0.014) & 0.058 (0.047, 0.069)\\  
+ 3 & 0.022 (0.02, 0.024) & 0.036 (0.022, 0.05)
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{ c| c | c }
+ \multicolumn{3}{c}{\textbf{ Humidity Included}} \\
+ \hline
+ Binary Variable & Case Model Coefficients (CI) & Death Model Coefficients (CI) \\
+ \hline
+ Coastal (Reference) &  0  &  0 \\ 
+ Noncoastal & 0.0018 (0.00059, 0.003) & -0.039 (-0.048, -0.03)
+\end{tabular}
+\end{center}
+
+\begin{center}
+\begin{tabular}{ c| c | c }
+ \multicolumn{3}{c}{\textbf{ Humidity Excluded}} \\
+ \hline
+ Binary Variable & Case Model Coefficients (CI) & Death Model Coefficients (CI) \\
+ \hline
+ Coastal (Reference) &  0  &  0 \\ 
+ Noncoastal & 0.023 (0.022, 0.024) & -0.0085 (-0.017, 1e-04)
+\end{tabular}
+\end{center}
+
+
+
+
+
