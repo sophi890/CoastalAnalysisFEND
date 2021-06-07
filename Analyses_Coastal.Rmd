@@ -10,11 +10,15 @@ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=70), tidy=TRUE)
 
 ## Read in data
 ```{r}
-library("readxl")
-library("lme4")
+library(readxl)
+library(lme4)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
 
 #Read in dataset with coastal coding. Read in summary sheet (sheet 13)
 coastal <- read_excel("FIPS-based datasets_05232021.xlsx", sheet = 13)
+
 #summary(coastal)
 
 #Read in PM25 data from our 2020 study, created with: PM25 = data.frame(fips = aggregate_pm_census_cdc_test_beds$fips, mean_pm25 = aggregate_pm_census_cdc_test_beds$mean_pm25)
@@ -22,7 +26,7 @@ coastal <- read_excel("FIPS-based datasets_05232021.xlsx", sheet = 13)
 load('PM25.Rda')
 ```
 
-## Create smaller dataset from previous dataset, dataclean, merge with PM25 dataset.
+## Create smaller datasets from previous datasets, dataclean, merge region dataset with summary dataset, finally merge with PM25 dataset.
 ```{r}
 coastal.new = data.frame(coastal$`FIPS as Text`, coastal$state, coastal$cases, coastal$deaths, coastal$`Country REGION`, coastal$`Coastal Distance`, coastal$`Population 2019 Estimate`, coastal$`Population Density`, coastal$`All Ages in Poverty (%)`, coastal$`Under 18s in Poverty`, coastal$`Median Income`, coastal$`percent adult obesity`, coastal$`diff/total`, coastal$`Politcal alignment 2020 election`, coastal$`median age 2019`, coastal$Humid)
 colnames(coastal.new) = c('fips', 'state', 'cases', 'deaths', 'region', 'coastal.distance', 'population2019', 'popdensity', 'poverty', 'under18poverty', 'median_income', 'pct_obesity', 'voter_margin_2020', 'party', 'median_age', 'humidity')
@@ -32,9 +36,12 @@ coastal.new$coastal.distance[is.na(coastal.new$coastal.distance)] <- 4
 coastal.new$coastal.distance = as.factor(coastal.new$coastal.distance)
 coastal.new <- within(coastal.new, coastal.distance <- relevel(coastal.distance, ref = 4))
 
-#change NAs in 'region' to 'Inland', convert all characters to lowercase
+#change NAs in coastal region to Inland, and save as factor with reference level Inland
 coastal.new$region[is.na(coastal.new$region)] <- 'Inland'
+coastal.new$region[coastal.new$region == '0'] <- 'Inland'
 coastal.new$region = tolower(coastal.new$region)
+coastal.new$region = as.factor(coastal.new$region)
+coastal.new <- within(coastal.new, region <- relevel(region, ref = 'inland'))
 
 #Merge with PM25 dataset
 coastal.new = merge(coastal.new, PM25, by = 'fips')
@@ -92,9 +99,25 @@ summary(model.indicator.cases.nohumidity)
 model.indicator.deaths.nohumidity = glmer(deaths ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
 summary(model.indicator.deaths.nohumidity)
 ```
+\newpage
+## Analysis by region
+```{r}
+model.byregion.cases = glmer(cases ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + factor(humidity) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
+summary(model.byregion.cases)
 
-## Summary of output
-```{r echo = F}
+model.byregion.deaths = glmer(deaths ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + factor(humidity) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
+summary(model.byregion.deaths)
+
+model.byregion.cases.nohumidity = glmer(cases ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
+summary(model.byregion.cases.nohumidity)
+
+model.byregion.deaths.nohumidity = glmer(deaths ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
+summary(model.byregion.deaths.nohumidity)
+```
+
+\newpage
+## Print exponentiated coefficients (ratio of probabilities)
+```{r echo = F, eval = F}
 paste(round(exp(summary(model.initial.cases)$coefficients[2,1]),3), " (", round(exp(summary(model.initial.cases)$coefficients[2,1] - 1.96*summary(model.initial.cases)$coefficients[2,2]),3), ", ", round(exp(summary(model.initial.cases)$coefficients[2,1] + 1.96*summary(model.initial.cases)$coefficients[2,2]),3), ")", sep = "")
 
 paste(round(exp(summary(model.initial.cases)$coefficients[3,1]),3), " (", round(exp(summary(model.initial.cases)$coefficients[3,1] - 1.96*summary(model.initial.cases)$coefficients[3,2]),3), ", ", round(exp(summary(model.initial.cases)$coefficients[3,1] + 1.96*summary(model.initial.cases)$coefficients[3,2]),3), ")", sep = "")
@@ -118,52 +141,43 @@ paste(round(exp(summary(model.indicator.deaths)$coefficients[2,1]),3), " (", rou
 paste(round(exp(summary(model.indicator.cases.nohumidity)$coefficients[2,1]),3), " (", round(exp(summary(model.indicator.cases.nohumidity)$coefficients[2,1] - 1.96*summary(model.indicator.cases.nohumidity)$coefficients[2,2]),3), ", ", round(exp(summary(model.indicator.cases.nohumidity)$coefficients[2,1] + 1.96*summary(model.indicator.cases.nohumidity)$coefficients[2,2]),3), ")", sep = "")
 
 paste(round(exp(summary(model.indicator.deaths.nohumidity)$coefficients[2,1]),3), " (", round(exp(summary(model.indicator.deaths.nohumidity)$coefficients[2,1] - 1.96*summary(model.indicator.deaths.nohumidity)$coefficients[2,2]),3), ", ", round(exp(summary(model.indicator.deaths.nohumidity)$coefficients[2,1] + 1.96*summary(model.indicator.deaths.nohumidity)$coefficients[2,2]),3), ")", sep = "")
+
+
 ```
-\begin{center}
-\begin{tabular}{ c| c | c }
- \multicolumn{3}{c}{\textbf{ Humidity Included}} \\
- \hline
- Coastal Distance & Case Model Coefficients (CI) & Death Model Coefficients (CI) \\
- \hline
- 1 (Reference) &  0  &  0 \\ 
- 2 & 0.992 (0.99, 0.993) & 1.043 (1.031, 1.055)\\  
- 3 & 1.003 (1.001, 1.005) & 1.024 (1.009, 1.039)
-\end{tabular}
-\end{center}
+```{r echo = F, eval = F}
+for (i in 2:10){
+  print(paste(round(exp(summary(model.byregion.cases)$coefficients[i,1]),3), " (", ... = round(exp(summary(model.byregion.cases)$coefficients[i,1] - 1.96*summary(model.byregion.cases)$coefficients[i,2]),3), ", ", round(exp(summary(model.byregion.cases)$coefficients[i,1] + 1.96*summary(model.byregion.cases)$coefficients[i,2]),3), ")", sep = ""))
 
-\begin{center}
-\begin{tabular}{ c| c | c }
- \multicolumn{3}{c}{\textbf{ Humidity Excluded}} \\
- \hline
- Coastal Distance & Case Model Coefficients (CI) & Death Model Coefficients (CI) \\
- \hline
- 1 (Reference) & 0  &  0 \\ 
- 2 & 1.013 (1.011, 1.014) & 1.059 (1.048, 1.071)\\  
- 3 & 1.022 (1.02, 1.024) & 1.037 (1.022, 1.052)
-\end{tabular}
-\end{center}
+  print(paste(round(exp(summary(model.byregion.deaths)$coefficients[i,1]),3), " (", round(exp(summary(model.byregion.deaths)$coefficients[i,1] - 1.96*summary(model.byregion.deaths)$coefficients[i,2]),3), ", ", round(exp(summary(model.byregion.deaths)$coefficients[i,1] + 1.96*summary(model.byregion.deaths)$coefficients[i,2]),3), ")", sep = ""))
 
-\begin{center}
-\begin{tabular}{ c| c | c }
- \multicolumn{3}{c}{\textbf{ Humidity Included}} \\
- \hline
- Binary Variable & Case Model Coefficients (CI) & Death Model Coefficients (CI) \\
- \hline
- Coastal (Reference) &  0  &  0 \\ 
- Noncoastal & 0.993 (0.992, 0.994) & 0.988 (0.981, 0.996)
-\end{tabular}
-\end{center}
+  print(paste(round(exp(summary(model.byregion.cases.nohumidity)$coefficients[i,1]),3), " (", round(exp(summary(model.byregion.cases.nohumidity)$coefficients[i,1] - 1.96*summary(model.byregion.cases.nohumidity)$coefficients[i,2]),3), ", ", round(exp(summary(model.byregion.cases.nohumidity)$coefficients[i,1] + 1.96*summary(model.byregion.cases.nohumidity)$coefficients[i,2]),3), ")", sep = ""))
 
-\begin{center}
-\begin{tabular}{ c| c | c }
- \multicolumn{3}{c}{\textbf{ Humidity Excluded}} \\
- \hline
- Binary Variable & Case Model Coefficients (CI) & Death Model Coefficients (CI) \\
- \hline
- Coastal (Reference) &  0  &  0 \\ 
- Noncoastal & 1.011 (1.01, 1.012) & 1.003 (0.995, 1.011)
-\end{tabular}
-\end{center}
+  print(paste(round(exp(summary(model.byregion.deaths.nohumidity)$coefficients[i,1]),3), " (", round(exp(summary(model.byregion.deaths.nohumidity)$coefficients[i,1] - 1.96*summary(model.byregion.deaths.nohumidity)$coefficients[i,2]),3), ", ", round(exp(summary(model.byregion.deaths.nohumidity)$coefficients[i,1] + 1.96*summary(model.byregion.deaths.nohumidity)$coefficients[i,2]),3), ")", sep = ""))
+}
+```
+
+## Printing tables
+```{r eval = F}
+tab_model(model.initial.cases, digits = 3)
+tab_model(model.initial.deaths, digits = 3)
+tab_model(model.initial.cases.nohumidity, digits = 3)
+tab_model(model.initial.deaths.nohumidity, digits = 3)
+tab_model(model.indicator.cases, digits = 3)
+tab_model(model.indicator.deaths, digits = 3)
+tab_model(model.indicator.cases.nohumidity, digits = 3)
+tab_model(model.indicator.deaths.nohumidity, digits = 3)
+tab_model(model.byregion.cases, digits = 3)
+tab_model(model.byregion.deaths, digits = 3)
+tab_model(model.byregion.cases.nohumidity, digits = 3)
+tab_model(model.byregion.deaths.nohumidity, digits = 3)
+```
+
+
+
+
+
+
+
 
 
 
