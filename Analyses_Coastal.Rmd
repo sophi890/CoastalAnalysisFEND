@@ -12,7 +12,7 @@ knitr::opts_chunk$set(tidy.opts=list(width.cutoff=70), tidy=TRUE)
 ## Read in data
 ```{r}
 library(readxl)
-library(lme4)
+library(gee)
 library(sjPlot)
 library(sjmisc)
 library(sjlabelled)
@@ -40,6 +40,7 @@ coastal.new <- within(coastal.new, coastal.distance <- relevel(coastal.distance,
 #change NAs in coastal region to Inland, and save as factor with reference level Inland
 coastal.new$region[is.na(coastal.new$region)] <- 'Inland'
 coastal.new$region[coastal.new$region == '0'] <- 'Inland'
+coastal.new$region[coastal.new$coastal.distance != 1] <- 'Inland'
 coastal.new$region = tolower(coastal.new$region)
 coastal.new$region = as.factor(coastal.new$region)
 coastal.new <- within(coastal.new, region <- relevel(region, ref = 'inland'))
@@ -50,72 +51,48 @@ names(coastal.new)[names(coastal.new) == 'poverty.x'] <- 'poverty'
 summary(coastal.new)
 ```
 \newpage
-## PRELIMINARY ANALYSIS on only coastal counties BEING EDITED
-```{r echo = F, eval = F}
-# Subset coastal counties only
-coastal.only = coastal.new[coastal.new$coastal.distance != 4,]
-nrow(coastal.only)
-nrow(na.omit(coastal.only))
-
-# Model cases
-model.initial.cases = glmer(cases ~ (1|state) + coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + factor(humidity) + mean_pm25, family = poisson(link = "log"), data = coastal.only)
-summary(model.initial.cases)
-
-# Model deaths
-model.initial.deaths = glmer(deaths ~ (1|state) + coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + factor(humidity) + mean_pm25, family = poisson(link = "log"), data = coastal.only)
-summary(model.initial.deaths)
-```
-
 ## Create indicator for being a coast (degree 1) 
 ```{r}
 # Indicator Coastal or NonCoastal
 coastal.new$indicatorcoast = ifelse(coastal.new$coastal.distance == '1', 'Coastal', 'NonCoastal')
 
 # Model cases
-model.indicator.cases = glmer(cases ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"), data = coastal.new)
-summary(model.indicator.cases)
+model.indicator.cases = gee(cases ~ factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"), data = coastal.new, id = as.factor(state))
+summary(model.indicator.cases)$coefficients
 
 # Model deaths
-model.indicator.deaths = glmer(deaths ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"), data = coastal.new)
-summary(model.indicator.deaths)
-```
+model.indicator.deaths = gee(deaths ~  factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.indicator.deaths)$coefficients
 
-## Repeat above, - humidity
-```{r eval = F}
-# being edited
+############ Repeat above, - humidity #############
+
 # Model cases
-model.initial.cases.nohumidity = glmer(cases ~ (1|state) + coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.only)
-summary(model.initial.cases.nohumidity)
+model.indicator.cases.nohumidity = gee(cases ~  factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.indicator.cases.nohumidity)$coefficients
 
 # Model deaths
-model.initial.deaths.nohumidity = glmer(deaths ~ (1|state) + coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.only)
-summary(model.initial.deaths.nohumidity)
+model.indicator.deaths.nohumidity = gee(deaths ~  factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.indicator.deaths.nohumidity)$coefficients
 ```
 
-```{r}
-# Model cases
-model.indicator.cases.nohumidity = glmer(cases ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
-summary(model.indicator.cases.nohumidity)
-
-# Model deaths
-model.indicator.deaths.nohumidity = glmer(deaths ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
-summary(model.indicator.deaths.nohumidity)
-```
 \newpage
 ## Analysis by region
 ```{r}
-model.byregion.cases = glmer(cases ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"), data = coastal.new)
-summary(model.byregion.cases)
+model.byregion.cases = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregion.cases)$coefficients
 
-model.byregion.deaths = glmer(deaths ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"), data = coastal.new)
-summary(model.byregion.deaths)
+model.byregion.deaths = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregion.deaths)$coefficients
 
-model.byregion.cases.nohumidity = glmer(cases ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
-summary(model.byregion.cases.nohumidity)
+#### Repeat above, - humidity ###############
 
-model.byregion.deaths.nohumidity = glmer(deaths ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
-summary(model.byregion.deaths.nohumidity)
+model.byregion.cases.nohumidity = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregion.cases.nohumidity)$coefficients
+
+model.byregion.deaths.nohumidity = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregion.deaths.nohumidity)$coefficients
 ```
+\newpage
 ## By region, splitting into Urban and Rural
 ```{r}
 coastal.new$area = ifelse(coastal.new$popdensity >= 1500, 'Urban', 'Rural')
@@ -128,20 +105,239 @@ coastal.new$regionru = as.factor(coastal.new$regionru)
 coastal.new <- within(coastal.new, regionru <- relevel(regionru, ref = 'inland'))
 summary(coastal.new$regionru)
 
-model.byregionru.cases = glmer(cases ~ (1|state) + regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"), data = coastal.new)
-summary(model.byregionru.cases)
+model.byregionru.cases = gee(cases ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregionru.cases)$coefficients
 
-model.byregionru.deaths = glmer(deaths ~ (1|state) + regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"), data = coastal.new)
-summary(model.byregionru.deaths)
+model.byregionru.deaths = gee(deaths ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregionru.deaths)$coefficients
 
-model.byregionru.cases.nohumidity = glmer(cases ~ (1|state) + regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
-summary(model.byregionru.cases.nohumidity)
+model.byregionru.cases.nohumidity = gee(cases ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregionru.cases.nohumidity)$coefficients
 
-model.byregionru.deaths.nohumidity = glmer(deaths ~ (1|state) + regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"), data = coastal.new)
-summary(model.byregionru.deaths.nohumidity)
+model.byregionru.deaths.nohumidity = gee(deaths ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregionru.deaths.nohumidity)$coefficients
+```
+\newpage
+## Comparing 1st vs 2nd vs 3rd degree Coastal
+```{r}
+# Subset coastal counties only
+coastal.only = coastal.new[coastal.new$coastal.distance != 4,]
+nrow(coastal.only)
+nrow(na.omit(coastal.only)) #check nas
+coastal.only$coastal.distance = factor(coastal.only$coastal.distance) #drops level 4
+summary(coastal.only)
+
+# Model cases
+model.initial.cases = gee(cases ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.only, id = as.factor(state))
+summary(model.initial.cases)$coefficients
+
+# Model deaths
+model.initial.deaths = gee(deaths ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.only, id = as.factor(state))
+summary(model.initial.deaths)$coefficients
+
+##### Repeat above, - humidity ######
+# Model cases
+model.initial.cases.nohumidity = gee(cases ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"),  data = coastal.only, id = as.factor(state))
+summary(model.initial.cases.nohumidity)$coefficients
+
+# Model deaths
+model.initial.deaths.nohumidity = gee(deaths ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25, family = poisson(link = "log"),  data = coastal.only, id = as.factor(state))
+summary(model.initial.deaths.nohumidity)$coefficients
 ```
 
 
+\newpage
+## Same Analysis with Our Additional Confounders
+```{r}
+model.indicator.cases.addconfounders = gee(cases ~  factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.new, id = as.factor(state))
+
+model.indicator.deaths.addconfounders = gee(deaths ~  factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct)
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.new, id = as.factor(state))
+
+model.byregion.cases.addconfounders = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct)
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.new, id = as.factor(state))
+
+model.byregion.deaths.addconfounders = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.new, id = as.factor(state))
+
+# - humidity
+model.indicator.cases.addconfounders.nohumidity = gee(cases ~  factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.new, id = as.factor(state))
+
+model.indicator.deaths.addconfounders.nohumidity = gee(deaths ~  factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+
+model.byregion.cases.addconfounders.nohumidity = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+
+model.byregion.deaths.addconfounders.nohumidity = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct)
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+
+# Analysis by region, rural/urban split
+model.byregionru.cases.addconfounders = gee(cases ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct)
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+
+model.byregionru.deaths.addconfounders = gee(deaths ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.new, id = as.factor(state))
+
+model.byregionru.cases.addconfounders.nohumidity = gee(cases ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct) 
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.new, id = as.factor(state))
+
+model.byregionru.deaths.addconfounders.nohumidity = gee(deaths ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct)
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.new, id = as.factor(state))
+
+# Comparing 1st vs 2nd vs 3rd degree coastal counties
+model.initial.cases.addconfounders = gee(cases ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct)
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.only, id = as.factor(state))
+
+model.initial.deaths.addconfounders = gee(deaths ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct)
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.only, id = as.factor(state))
+
+model.initial.cases.nohumidity.addconfounders = gee(cases ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct)
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad),  data = coastal.only, id = as.factor(state))
+
+model.initial.deaths.nohumidity.addconfounders = gee(deaths ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+                              + scale(log(median_house_value)) + scale(owner_occupied) 
+                              + scale(blk_pct) + scale(hispanic_pct) 
+                              + scale(native_pct) + scale(asian_pct)
+                              + scale(date_since_social) + scale(date_since) 
+                              + scale(beds/population.old) + scale(smoke) 
+                              + scale(mean_pm25) 
+                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
+                              + scale(mean_summer_temp) + scale(mean_winter_temp)
+                              + scale(no_grad),  data = coastal.only, id = as.factor(state))
+```
 
 \newpage
 ## Print tables
@@ -161,146 +357,14 @@ tab_model(model.byregionru.cases, digits = 3)
 tab_model(model.byregionru.deaths, digits = 3)
 tab_model(model.byregionru.cases.nohumidity, digits = 3)
 tab_model(model.byregionru.deaths.nohumidity, digits = 3)
+
+tab_model(model.initial.cases, digits = 3)
+tab_model(model.initial.deaths, digits = 3)
+tab_model(model.initial.cases.nohumidity, digits = 3)
+tab_model(model.initial.deaths.nohumidity, digits = 3)
 ```
 
-## Same Analysis with Our Additional Confounders
-```{r}
-model.indicator.cases.addconfounders = glmer(cases ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.indicator.deaths.addconfounders = glmer(deaths ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct)
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.byregion.cases.addconfounders = glmer(cases ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct)
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.byregion.deaths.addconfounders = glmer(deaths ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-# - humidity
-model.indicator.cases.addconfounders.nohumidity = glmer(cases ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.indicator.deaths.addconfounders.nohumidity = glmer(deaths ~ (1|state) + factor(indicatorcoast) + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.byregion.cases.addconfounders.nohumidity = glmer(cases ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.byregion.deaths.addconfounders.nohumidity = glmer(deaths ~ (1|state) + region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct)
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-# Analysis by region, rural/urban split
-model.byregionru.cases.addconfounders = glmer(cases ~ (1|state) + regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct)
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.byregionru.deaths.addconfounders = glmer(deaths ~ (1|state) + regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              + scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.byregionru.cases.addconfounders.nohumidity = glmer(cases ~ (1|state) + regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct) 
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-
-model.byregionru.deaths.addconfounders.nohumidity = glmer(deaths ~ (1|state) + regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
-                              + scale(log(median_house_value)) + scale(owner_occupied) 
-                              + scale(blk_pct) + scale(hispanic_pct) 
-                              + scale(native_pct) + scale(asian_pct)
-                              + scale(date_since_social) + scale(date_since) 
-                              + scale(beds/population.old) + scale(smoke) 
-                              + scale(mean_pm25) 
-                              #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
-                              + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad), family = poisson(link = "log"), data = coastal.new)
-```
-
-## Printing tables
+## Printing tablesL Confounders added
 ```{r eval = F}
 # Run each line individually not all at once
 tab_model(model.indicator.cases.addconfounders, digits = 3)
@@ -317,6 +381,11 @@ tab_model(model.byregionru.cases.addconfounders, digits = 3)
 tab_model(model.byregionru.cases.addconfounders.nohumidity, digits = 3)
 tab_model(model.byregionru.deaths.addconfounders, digits = 3)
 tab_model(model.byregionru.deaths.addconfounders.nohumidity, digits = 3)
+
+tab_model(model.initial.cases, digits = 3)
+tab_model(model.initial.deaths, digits = 3)
+tab_model(model.initial.cases.nohumidity, digits = 3)
+tab_model(model.initial.deaths.nohumidity, digits = 3)
 ```
 
 
