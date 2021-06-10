@@ -63,11 +63,11 @@ coastal.new$deathrate = coastal.new$deaths/coastal.new$population2019
 coastal.new$bedrate = coastal.new$beds/coastal.new$population.old
 
 #numeric variables
-x = data.frame(log(coastal.new$popdensity), coastal.new$poverty, coastal.new$under18poverty, log(coastal.new$median_income), coastal.new$pct_obesity, coastal.new$voter_margin_2020, coastal.new$median_age, log(coastal.new$median_house_value), coastal.new$owner_occupied, coastal.new$blk_pct, coastal.new$hispanic_pct, coastal.new$white_pct, coastal.new$native_pct, coastal.new$asian_pct, coastal.new$no_grad, coastal.new$date_since, coastal.new$date_since_social, coastal.new$bedrate, coastal.new$smoke, coastal.new$mean_summer_temp, coastal.new$mean_winter_temp, coastal.new$mean_pm25, coastal.new$mean_summer_rm, coastal.new$mean_winter_rm, coastal.new$caserate, coastal.new$deathrate)
+x = data.frame(log(coastal.new$popdensity), coastal.new$poverty, log(coastal.new$median_income), coastal.new$pct_obesity, coastal.new$voter_margin_2020, coastal.new$median_age, log(coastal.new$median_house_value), coastal.new$owner_occupied, coastal.new$blk_pct, coastal.new$hispanic_pct, coastal.new$white_pct, coastal.new$native_pct, coastal.new$asian_pct, coastal.new$no_grad, coastal.new$date_since, coastal.new$date_since_social, coastal.new$bedrate, coastal.new$smoke, coastal.new$mean_summer_temp, coastal.new$mean_winter_temp, coastal.new$mean_pm25, coastal.new$mean_summer_rm, coastal.new$mean_winter_rm, coastal.new$caserate, coastal.new$deathrate)
 cormat = cor(x)
 
-data.frame(corr_caserate = sort(cormat[,25], decreasing = T))#correlation of confounders with caserate
-data.frame(corr_deathrate = sort(cormat[,26], decreasing = T))#correlation of confounders with deatherate
+data.frame(corr_caserate = sort(cormat[,(ncol(x)-1)], decreasing = T))#correlation of confounders with caserate
+data.frame(corr_deathrate = sort(cormat[,ncol(x)], decreasing = T))#correlation of confounders with deatherate
 
 library(polycor)
 polycors = rep(NA, ncol(x))
