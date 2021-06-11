@@ -330,6 +330,7 @@ model.initial.cases.addconfounders = gee(cases ~  coastal.distance + offset(log(
                               + scale(no_grad), family = poisson(link = "log"),  
                               data = coastal.only, id = as.factor(state))
 
+
 model.initial.deaths.addconfounders = gee(deaths ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
                               + scale(log(median_house_value)) + scale(owner_occupied) 
                               + scale(blk_pct) + scale(hispanic_pct) 
@@ -351,7 +352,8 @@ model.initial.cases.nohumidity.addconfounders = gee(cases ~  coastal.distance + 
                               + scale(mean_pm25) 
                               #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
                               + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad),  data = coastal.only, id = as.factor(state))
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.only, id = as.factor(state))
 
 model.initial.deaths.nohumidity.addconfounders = gee(deaths ~  coastal.distance + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
                               + scale(log(median_house_value)) + scale(owner_occupied) 
@@ -362,7 +364,8 @@ model.initial.deaths.nohumidity.addconfounders = gee(deaths ~  coastal.distance 
                               + scale(mean_pm25) 
                               #+ scale(mean_summer_rm) + scale(mean_winter_rm) 
                               + scale(mean_summer_temp) + scale(mean_winter_temp)
-                              + scale(no_grad),  data = coastal.only, id = as.factor(state))
+                              + scale(no_grad), family = poisson(link = "log"),  
+                              data = coastal.only, id = as.factor(state))
 ```
 
 \newpage
@@ -395,29 +398,7 @@ tab_model(model.initial.cases.addconfounders, model.initial.cases.nohumidity.add
 tab_model(model.initial.deaths.addconfounders, model.initial.deaths.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
 ```
 
-## Printing tablesL Confounders added
-```{r eval = F}
-# Run each line individually not all at once
-tab_model(model.indicator.cases.addconfounders,robust = T, digits = 3)
-tab_model(model.indicator.cases.nohumidity.addconfounders,robust = T, digits = 3)
-tab_model(model.indicator.deaths.addconfounders,robust = T, digits = 3)
-tab_model(model.indicator.deaths.nohumidity.addconfounders,robust = T, digits = 3)
 
-tab_model(model.byregion.cases.addconfounders,robust = T, digits = 3)
-tab_model(model.byregion.cases.nohumidity.addconfounders,robust = T, digits = 3)
-tab_model(model.byregion.deaths.addconfounders,robust = T, digits = 3)
-tab_model(model.byregion.deaths.nohumidity.addconfounders,robust = T, digits = 3)
-
-tab_model(model.byregionru.cases.addconfounders,robust = T, digits = 3)
-tab_model(model.byregionru.cases.nohumidity.addconfounders,robust = T, digits = 3)
-tab_model(model.byregionru.deaths.addconfounders,robust = T, digits = 3)
-tab_model(model.byregionru.deaths.nohumidity.addconfounders,robust = T, digits = 3)
-
-tab_model(model.initial.cases,robust = T, digits = 3)
-tab_model(model.initial.cases.nohumidity,robust = T, digits = 3)
-tab_model(model.initial.deaths,robust = T, digits = 3)
-tab_model(model.initial.deaths.nohumidity,robust = T, digits = 3)
-```
 
 
 
