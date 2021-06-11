@@ -224,7 +224,7 @@ model.byregion.deaths.addconfounders = gee(deaths ~  region + offset(log(populat
                               data = coastal.new, id = as.factor(state))
 
 # - humidity
-model.indicator.cases.addconfounders.nohumidity = gee(cases ~  indicatorcoast + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+model.indicator.cases.nohumidity.addconfounders = gee(cases ~  indicatorcoast + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
                               + scale(log(median_house_value)) + scale(owner_occupied) 
                               + scale(blk_pct) + scale(hispanic_pct) 
                               + scale(native_pct) + scale(asian_pct) 
@@ -236,7 +236,7 @@ model.indicator.cases.addconfounders.nohumidity = gee(cases ~  indicatorcoast + 
                               + scale(no_grad), family = poisson(link = "log"),  
                               data = coastal.new, id = as.factor(state))
 
-model.indicator.deaths.addconfounders.nohumidity = gee(deaths ~  indicatorcoast + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+model.indicator.deaths.nohumidity.addconfounders = gee(deaths ~  indicatorcoast + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
                               + scale(log(median_house_value)) + scale(owner_occupied) 
                               + scale(blk_pct) + scale(hispanic_pct) 
                               + scale(native_pct) + scale(asian_pct) 
@@ -247,7 +247,7 @@ model.indicator.deaths.addconfounders.nohumidity = gee(deaths ~  indicatorcoast 
                               + scale(mean_summer_temp) + scale(mean_winter_temp)
                               + scale(no_grad), family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
 
-model.byregion.cases.addconfounders.nohumidity = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+model.byregion.cases.nohumidity.addconfounders = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
                               + scale(log(median_house_value)) + scale(owner_occupied) 
                               + scale(blk_pct) + scale(hispanic_pct) 
                               + scale(native_pct) + scale(asian_pct) 
@@ -258,7 +258,7 @@ model.byregion.cases.addconfounders.nohumidity = gee(cases ~  region + offset(lo
                               + scale(mean_summer_temp) + scale(mean_winter_temp)
                               + scale(no_grad), family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
 
-model.byregion.deaths.addconfounders.nohumidity = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+model.byregion.deaths.nohumidity.addconfounders = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
                               + scale(log(median_house_value)) + scale(owner_occupied) 
                               + scale(blk_pct) + scale(hispanic_pct) 
                               + scale(native_pct) + scale(asian_pct)
@@ -293,7 +293,7 @@ model.byregionru.deaths.addconfounders = gee(deaths ~  regionru + offset(log(pop
                               + scale(no_grad), family = poisson(link = "log"),  
                               data = coastal.new, id = as.factor(state))
 
-model.byregionru.cases.addconfounders.nohumidity = gee(cases ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+model.byregionru.cases.nohumidity.addconfounders = gee(cases ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
                               + scale(log(median_house_value)) + scale(owner_occupied) 
                               + scale(blk_pct) + scale(hispanic_pct) 
                               + scale(native_pct) + scale(asian_pct) 
@@ -305,7 +305,7 @@ model.byregionru.cases.addconfounders.nohumidity = gee(cases ~  regionru + offse
                               + scale(no_grad), family = poisson(link = "log"),  
                               data = coastal.new, id = as.factor(state))
 
-model.byregionru.deaths.addconfounders.nohumidity = gee(deaths ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
+model.byregionru.deaths.nohumidity.addconfounders = gee(deaths ~  regionru + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) 
                               + scale(log(median_house_value)) + scale(owner_occupied) 
                               + scale(blk_pct) + scale(hispanic_pct) 
                               + scale(native_pct) + scale(asian_pct)
@@ -369,44 +369,49 @@ model.initial.deaths.nohumidity.addconfounders = gee(deaths ~  coastal.distance 
 ## Print tables
 ```{r eval = F}
 # Run each line individually not all at once
-tab_model(model.indicator.cases, robust = T, digits = 3)
-tab_model(model.indicator.deaths, robust = T, digits = 3)
-tab_model(model.indicator.cases.nohumidity, robust = T, digits = 3)
-tab_model(model.indicator.deaths.nohumidity, robust = T, digits = 3)
+tab_model(model.indicator.cases, model.indicator.cases.nohumidity, robust = T, digits = 3, dv.labels = c("Cases (Humidity +)", "Cases (Humidity -)"))
+tab_model(model.indicator.deaths, model.indicator.deaths.nohumidity, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
 
-tab_model(model.byregion.cases, robust = T, digits = 3)
-tab_model(model.byregion.deaths, robust = T, digits = 3)
-tab_model(model.byregion.cases.nohumidity, robust = T, digits = 3)
-tab_model(model.byregion.deaths.nohumidity, robust = T, digits = 3)
+tab_model(model.byregion.cases, model.byregion.cases.nohumidity, robust = T, digits = 3, dv.labels = c("Cases (Humidity +)", "Cases (Humidity -)"))
+tab_model(model.byregion.deaths, model.byregion.deaths.nohumidity, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
 
-tab_model(model.byregionru.cases, robust = T, digits = 3)
-tab_model(model.byregionru.deaths, robust = T, digits = 3)
-tab_model(model.byregionru.cases.nohumidity, robust = T, digits = 3)
-tab_model(model.byregionru.deaths.nohumidity, robust = T, digits = 3)
+tab_model(model.byregionru.cases, model.byregionru.cases.nohumidity, robust = T, digits = 3, dv.labels = c("Cases (Humidity +)", "Cases (Humidity -)"))
+tab_model(model.byregionru.deaths, model.byregionru.deaths.nohumidity, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
 
-tab_model(model.initial.cases, robust = T, digits = 3)
-tab_model(model.initial.deaths, robust = T, digits = 3)
-tab_model(model.initial.cases.nohumidity, robust = T, digits = 3)
-tab_model(model.initial.deaths.nohumidity, robust = T, digits = 3)
+tab_model(model.initial.cases, model.initial.cases.nohumidity, robust = T, digits = 3, dv.labels = c("Cases (Humidity +)", "Cases (Humidity -)"))
+tab_model(model.initial.deaths, model.initial.deaths.nohumidity, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
+
+## Add additional confounders
+tab_model(model.indicator.cases.addconfounders, model.indicator.cases.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Cases (Humidity +)", "Cases (Humidity -)"))
+tab_model(model.indicator.deaths.addconfounders, model.indicator.deaths.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
+
+tab_model(model.byregion.cases.addconfounders, model.byregion.cases.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Cases (Humidity +)", "Cases (Humidity -)"))
+tab_model(model.byregion.deaths.addconfounders, model.byregion.deaths.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
+
+tab_model(model.byregionru.cases.addconfounders, model.byregionru.cases.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Cases (Humidity +)", "Cases (Humidity -)"))
+tab_model(model.byregionru.deaths.addconfounders, model.byregionru.deaths.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
+
+tab_model(model.initial.cases.addconfounders, model.initial.cases.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Cases (Humidity +)", "Cases (Humidity -)"))
+tab_model(model.initial.deaths.addconfounders, model.initial.deaths.nohumidity.addconfounders, robust = T, digits = 3, dv.labels = c("Deaths (Humidity +)", "Deaths (Humidity -)"))
 ```
 
 ## Printing tablesL Confounders added
 ```{r eval = F}
 # Run each line individually not all at once
 tab_model(model.indicator.cases.addconfounders,robust = T, digits = 3)
-tab_model(model.indicator.cases.addconfounders.nohumidity,robust = T, digits = 3)
+tab_model(model.indicator.cases.nohumidity.addconfounders,robust = T, digits = 3)
 tab_model(model.indicator.deaths.addconfounders,robust = T, digits = 3)
-tab_model(model.indicator.deaths.addconfounders.nohumidity,robust = T, digits = 3)
+tab_model(model.indicator.deaths.nohumidity.addconfounders,robust = T, digits = 3)
 
 tab_model(model.byregion.cases.addconfounders,robust = T, digits = 3)
-tab_model(model.byregion.cases.addconfounders.nohumidity,robust = T, digits = 3)
+tab_model(model.byregion.cases.nohumidity.addconfounders,robust = T, digits = 3)
 tab_model(model.byregion.deaths.addconfounders,robust = T, digits = 3)
-tab_model(model.byregion.deaths.addconfounders.nohumidity,robust = T, digits = 3)
+tab_model(model.byregion.deaths.nohumidity.addconfounders,robust = T, digits = 3)
 
 tab_model(model.byregionru.cases.addconfounders,robust = T, digits = 3)
-tab_model(model.byregionru.cases.addconfounders.nohumidity,robust = T, digits = 3)
+tab_model(model.byregionru.cases.nohumidity.addconfounders,robust = T, digits = 3)
 tab_model(model.byregionru.deaths.addconfounders,robust = T, digits = 3)
-tab_model(model.byregionru.deaths.addconfounders.nohumidity,robust = T, digits = 3)
+tab_model(model.byregionru.deaths.nohumidity.addconfounders,robust = T, digits = 3)
 
 tab_model(model.initial.cases,robust = T, digits = 3)
 tab_model(model.initial.cases.nohumidity,robust = T, digits = 3)
