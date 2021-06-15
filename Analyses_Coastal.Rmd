@@ -66,8 +66,8 @@ coastal.new$bedrate = coastal.new$beds/coastal.new$population.old
 x = data.frame(log(coastal.new$popdensity), coastal.new$poverty, log(coastal.new$median_income), coastal.new$pct_obesity, coastal.new$voter_margin_2020, coastal.new$median_age, log(coastal.new$median_house_value), coastal.new$owner_occupied, coastal.new$blk_pct, coastal.new$hispanic_pct, coastal.new$white_pct, coastal.new$native_pct, coastal.new$asian_pct, coastal.new$no_grad, coastal.new$date_since, coastal.new$date_since_social, coastal.new$bedrate, coastal.new$smoke, coastal.new$mean_summer_temp, coastal.new$mean_winter_temp, coastal.new$mean_pm25, coastal.new$mean_summer_rm, coastal.new$mean_winter_rm, coastal.new$caserate, coastal.new$deathrate)
 cormat = cor(x)
 
-data.frame(corr_caserate = sort(cormat[,(ncol(x)-1)], decreasing = T))#correlation of confounders with caserate
-data.frame(corr_deathrate = sort(cormat[,ncol(x)], decreasing = T))#correlation of confounders with deatherate
+data.frame(corr_caserate = sort(abs(cormat[,(ncol(x)-1)]), decreasing = T))#correlation of confounders with caserate
+data.frame(corr_deathrate = sort(abs(cormat[,ncol(x)]), decreasing = T))#correlation of confounders with deatherate
 
 library(polycor)
 polycors = rep(NA, ncol(x))
@@ -75,7 +75,13 @@ names(polycors) = names(x)
 for (i in 1:ncol(x)){
   polycors[i] = polyserial(x[,i], coastal.new$indicatorcoast)
 }
-data.frame(corr_indicatorcoast = sort(polycors, decreasing = T))
+data.frame(corr_indicatorcoast = sort(abs(polycors), decreasing = T))
+
+# Party - don't include if voter margin is already included?
+
+x.chosen = x[,c(1,2,3,4,5,6,7,9,11,12,13,14,16,18,19,20)]
+names(x.chosen)
+cor(x.chosen)
 ```
 
 
