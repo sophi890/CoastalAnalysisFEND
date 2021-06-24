@@ -9,18 +9,9 @@ library(knitr)
 opts_chunk$set(tidy.opts=list(width.cutoff=70), tidy=TRUE)
 ```
 
-```{r}
-library(readxl)
-library(stringr)
-library(gee)
-library(sjPlot)
-library(sjmisc)
-library(sjlabelled)
-```
-
 \section{Summary}
 ## Confounding Variables
-\begin{enumerate}{
+\begin{enumerate}
 \item Population Density. Reflects the role of social distance in airborne propagation. We should in all our comparisons keep this variable as fixed as we can while avoiding the comparison of small sets of data.
 \item All Ages in Poverty (%). Reflects propensity to respect hygiene (notably mask adoption) and social distance rules (living circumstances and ability to stay-at-home).
 \item Median Income. Similar to (2) while an independent variable (poverty rate may be high and median income high or low dependent on the wealth gap).
@@ -30,7 +21,7 @@ library(sjlabelled)
 \item Voting party in the 2020 presidential election. See (5).
 \item Air pollution (PM 2.5) (Dominici lab data). Reflects propensity to generate respiratory droplets — and observed correlation with COVID infection/symptom severity. Should use 2020 PM 2.5 data if available given the importance of the fire season in 2020.
 \item Mean winter and summer humidity (Dominici lab data). Reflects propensity to generate respiratory droplets — and observed correlation with COVID infection/symptom severity. 
-}
+\end{enumerate}
 
 ## Analyses
 \begin{itemize}
@@ -48,6 +39,15 @@ library(sjlabelled)
 \end{itemize}
 
 \newpage
+```{r}
+library(readxl)
+library(stringr)
+library(gee)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
+```
+
 \section{Analyses}
 ## Read in data and additional confounding variables from Dominici lab (air pollution 2020 from aqs, humidity from previous Dominici lab confounding set)
 ```{r}
