@@ -5,7 +5,8 @@ output: pdf_document
 
 ```{r,echo=FALSE,message=FALSE,warning=FALSE}
 # Set so that long lines in R will be wrapped:
-knitr::opts_chunk$set(tidy.opts=list(width.cutoff=70), tidy=TRUE)
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=70), tidy=TRUE)
 ```
 
 ```{r}
@@ -50,9 +51,16 @@ library(sjlabelled)
 \section{Analyses}
 ## Read in data and additional confounding variables from Dominici lab (air pollution 2020 from aqs, humidity from previous Dominici lab confounding set)
 ```{r}
+# Summary sheet from FEND data
 coastal <- read_excel("FIPS-based datasets_05232021.xlsx", sheet = 13)
-load('confounding.Rda')
+
+# Contains 2020 AQS air pollution data
 pm = read.csv('aqs-pm25-annual-aggregated.csv')
+pm$fips = paste(str_pad(pm$state_code, 2, pad = '0'), str_pad(pm$fips3, 3, pad = '0'), sep ="")
+colnames(pm)[3] = 'mean_pm25'
+
+# Contains humidity data and other confounders used in 2020 study
+load('confounding.Rda') 
 ```
 
 ## Create smaller datasets from previous datasets, dataclean, merge with PM25 and humidity data.
@@ -70,24 +78,20 @@ coastal.new$region[is.na(coastal.new$region)] <- 'Inland'
 coastal.new$region[coastal.new$region == '0'] <- 'Inland'
 coastal.new$region[coastal.new$coastal.distance != 1] <- 'Inland'
 coastal.new$region = tolower(coastal.new$region)
-coastal.new$region = as.factor(coastal.new$region)
-coastal.new <- within(coastal.new, region <- relevel(region, ref = 'inland'))
-
-# Merge with humidity and mean_pm25
-coastal.new = merge(coastal.new, cbind.data.frame(fips = confounding$fips, mean_pm25 = confounding$mean_pm25, mean_summer_rm = confounding$mean_summer_rm, mean_winter_rm = confounding$mean_winter_rm), by = 'fips')
+coastal.new$region = factor(coastal.new$region, levels = c('inland', 'atlantic', 'gulf of mexico', 'pacific'))
+#coastal.new <- within(coastal.new, region <- relevel(region, ref = 'inland'))
 
 ## Create indicator for being a coast (degree 1) 
 coastal.new$indicatorcoast = ifelse(coastal.new$coastal.distance == '1', 'Coastal', 'NonCoastal')
 coastal.new$indicatorcoast = as.factor(coastal.new$indicatorcoast)
 coastal.new <- within(coastal.new, indicatorcoast <- relevel(indicatorcoast, ref = 'NonCoastal'))
 
-summary(coastal.new)
-```
+# Merge with humidity and mean_pm25
+coastal.new = merge(coastal.new, cbind.data.frame(fips = confounding$fips, mean_summer_rm = confounding$mean_summer_rm, mean_winter_rm = confounding$mean_winter_rm), by = 'fips')
+coastal.new = merge(coastal.new, pm, by = 'fips')
 
-```{r}
-pm = read.csv('aqs-pm25-annual-aggregated.csv')
-colnames(pm)[4] = 'state'
-pm$fips = paste(str_pad(pm$state_code, 2, pad = '0'), str_pad(pm$fips3, 3, pad = '0'), sep ="")
+nrow(coastal.new)
+summary(coastal.new)
 ```
 
 \newpage
@@ -113,10 +117,10 @@ Gulf urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  
 coastal.urban = subset(coastal.new, coastal.new$popdensity >= 1500)
 
 model.byregion.cases.urban = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
-summary(model.byregion.cases)$coefficients
+summary(model.byregion.cases.urban)$coefficients
 
 model.byregion.deaths.urban = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
-summary(model.byregion.deaths)$coefficients
+summary(model.byregion.deaths.urban)$coefficients
 ```
 
 ## Analysis 3, 6, 9
@@ -128,10 +132,10 @@ Gulf rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  
 coastal.rural = subset(coastal.new, coastal.new$popdensity < 1500)
 
 model.byregion.cases.rural = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.rural, id = as.factor(state))
-summary(model.byregion.cases)$coefficients
+summary(model.byregion.cases.rural)$coefficients
 
 model.byregion.deaths.rural = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.rural, id = as.factor(state))
-summary(model.byregion.deaths)$coefficients
+summary(model.byregion.deaths.rural)$coefficients
 ```
 \newpage
 ## Some splits
@@ -139,19 +143,40 @@ summary(model.byregion.deaths)$coefficients
 table(coastal.new$region)
 table(coastal.urban$region)
 table(coastal.rural$region)
-
 ```
 
 
-```{r eval = F}
+```{r eval = F, message = F}
 tab_model(model.byregion.cases, robust = T, digits = 3)
 tab_model(model.byregion.deaths, robust = T, digits = 3)
 tab_model(model.byregion.cases.urban, robust = T, digits = 3)
 tab_model(model.byregion.deaths.urban, robust = T, digits = 3)
 tab_model(model.byregion.cases.rural, robust = T, digits = 3)
 tab_model(model.byregion.deaths.rural, robust = T, digits = 3)
-
 ```
+## Manually Calculate Confidence Intervals
+```{r}
+for (i in c(2,5,9)){
+  print(exp(summary(model.byregion.cases)$coefficients[i,1]))
+print(c(exp(summary(model.byregion.cases)$coefficients[i,1] - 1.96*(summary(model.byregion.cases)$coefficients[i,4])), exp(summary(model.byregion.cases)$coefficients[i,1] + 1.96*(summary(model.byregion.cases)$coefficients[i,4]))))
+}
+
+for (i in c(2,5,9)){
+  print(exp(summary(model.byregion.deaths)$coefficients[i,1]))
+print(c(exp(summary(model.byregion.deaths)$coefficients[i,1] - 1.96*(summary(model.byregion.deaths)$coefficients[i,4])), exp(summary(model.byregion.deaths)$coefficients[i,1] + 1.96*(summary(model.byregion.deaths)$coefficients[i,4]))))
+}
+
+for (i in c(2,5,9)){
+  print(exp(summary(model.byregion.cases.rural)$coefficients[i,1]))
+print(c(exp(summary(model.byregion.cases.rural)$coefficients[i,1] - 1.96*(summary(model.byregion.cases.rural)$coefficients[i,4])), exp(summary(model.byregion.cases.rural)$coefficients[i,1] + 1.96*(summary(model.byregion.cases.rural)$coefficients[i,4]))))
+}
+
+for (i in c(2,5,9)){
+  print(exp(summary(model.byregion.deaths.rural)$coefficients[i,1]))
+print(c(exp(summary(model.byregion.deaths.rural)$coefficients[i,1] - 1.96*(summary(model.byregion.deaths.rural)$coefficients[i,4])), exp(summary(model.byregion.deaths.rural)$coefficients[i,1] + 1.96*(summary(model.byregion.deaths.rural)$coefficients[i,4]))))
+}
+```
+
 
 
 
