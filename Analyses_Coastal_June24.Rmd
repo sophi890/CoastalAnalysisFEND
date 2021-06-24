@@ -107,7 +107,7 @@ summary(model.byregion.cases)$coefficients
 model.byregion.deaths = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
 summary(model.byregion.deaths)$coefficients
 ```
-
+\newpage
 ## Analysis 2, 5, 8
 Atlantic urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  urban Counties (including all counties bordering non-ocean bodies of water).
 Pacific urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  urban Counties (including all counties bordering non-ocean bodies of water).
@@ -122,7 +122,7 @@ summary(model.byregion.cases.urban)$coefficients
 model.byregion.deaths.urban = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
 summary(model.byregion.deaths.urban)$coefficients
 ```
-
+\newpage
 ## Analysis 3, 6, 9
 Atlantic rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  rural Counties (including all counties bordering non-ocean bodies of water).
 Pacific rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  rural Counties (including all counties bordering non-ocean bodies of water).
