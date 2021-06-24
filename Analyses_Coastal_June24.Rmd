@@ -147,12 +147,12 @@ table(coastal.rural$region)
 
 
 ```{r eval = F, message = F}
-tab_model(model.byregion.cases, robust = T, digits = 3)
-tab_model(model.byregion.deaths, robust = T, digits = 3)
-tab_model(model.byregion.cases.urban, robust = T, digits = 3)
-tab_model(model.byregion.deaths.urban, robust = T, digits = 3)
-tab_model(model.byregion.cases.rural, robust = T, digits = 3)
-tab_model(model.byregion.deaths.rural, robust = T, digits = 3)
+tab_model(model.byregion.cases, dv.labels = 'Cases (All)', robust = T, digits = 3)
+tab_model(model.byregion.deaths, dv.labels = 'Deaths (All)', robust = T, digits = 3)
+tab_model(model.byregion.cases.urban, dv.labels = 'Cases (Urban)', robust = T, digits = 3)
+tab_model(model.byregion.deaths.urban, dv.labels = 'Deaths (Urban)', robust = T, digits = 3)
+tab_model(model.byregion.cases.rural, dv.labels = 'Cases (Rural)', robust = T, digits = 3)
+tab_model(model.byregion.deaths.rural, dv.labels = 'Deaths (Rural)', robust = T, digits = 3)
 ```
 ## Manually Calculate Confidence Intervals
 ```{r}
