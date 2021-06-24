@@ -156,24 +156,24 @@ tab_model(model.byregion.deaths.rural, dv.labels = 'Deaths (Rural)', robust = T,
 ```
 ## Manually Calculate Confidence Intervals
 ```{r}
-for (i in c(2,5,9)){
+for (i in c(2,3,4)){
   print(exp(summary(model.byregion.cases)$coefficients[i,1]))
-print(c(exp(summary(model.byregion.cases)$coefficients[i,1] - 1.96*(summary(model.byregion.cases)$coefficients[i,4])), exp(summary(model.byregion.cases)$coefficients[i,1] + 1.96*(summary(model.byregion.cases)$coefficients[i,4]))))
+print(c(exp(summary(model.byregion.cases)$coefficients[i,1] - 1.9599*(summary(model.byregion.cases)$coefficients[i,4])), exp(summary(model.byregion.cases)$coefficients[i,1] + 1.9599*(summary(model.byregion.cases)$coefficients[i,4]))))
 }
 
-for (i in c(2,5,9)){
+for (i in c(2,3,4)){
   print(exp(summary(model.byregion.deaths)$coefficients[i,1]))
-print(c(exp(summary(model.byregion.deaths)$coefficients[i,1] - 1.96*(summary(model.byregion.deaths)$coefficients[i,4])), exp(summary(model.byregion.deaths)$coefficients[i,1] + 1.96*(summary(model.byregion.deaths)$coefficients[i,4]))))
+print(c(exp(summary(model.byregion.deaths)$coefficients[i,1] - 1.9599*(summary(model.byregion.deaths)$coefficients[i,4])), exp(summary(model.byregion.deaths)$coefficients[i,1] + 1.9599*(summary(model.byregion.deaths)$coefficients[i,4]))))
 }
 
-for (i in c(2,5,9)){
+for (i in c(2,3,4)){
   print(exp(summary(model.byregion.cases.rural)$coefficients[i,1]))
-print(c(exp(summary(model.byregion.cases.rural)$coefficients[i,1] - 1.96*(summary(model.byregion.cases.rural)$coefficients[i,4])), exp(summary(model.byregion.cases.rural)$coefficients[i,1] + 1.96*(summary(model.byregion.cases.rural)$coefficients[i,4]))))
+print(c(exp(summary(model.byregion.cases.rural)$coefficients[i,1] - 1.9599*(summary(model.byregion.cases.rural)$coefficients[i,4])), exp(summary(model.byregion.cases.rural)$coefficients[i,1] + 1.9599*(summary(model.byregion.cases.rural)$coefficients[i,4]))))
 }
 
-for (i in c(2,5,9)){
+for (i in c(2,3,4)){
   print(exp(summary(model.byregion.deaths.rural)$coefficients[i,1]))
-print(c(exp(summary(model.byregion.deaths.rural)$coefficients[i,1] - 1.96*(summary(model.byregion.deaths.rural)$coefficients[i,4])), exp(summary(model.byregion.deaths.rural)$coefficients[i,1] + 1.96*(summary(model.byregion.deaths.rural)$coefficients[i,4]))))
+print(c(exp(summary(model.byregion.deaths.rural)$coefficients[i,1] - 1.9599*(summary(model.byregion.deaths.rural)$coefficients[i,4])), exp(summary(model.byregion.deaths.rural)$coefficients[i,1] + 1.9599*(summary(model.byregion.deaths.rural)$coefficients[i,4]))))
 }
 ```
 
