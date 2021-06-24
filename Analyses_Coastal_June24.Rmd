@@ -13,7 +13,7 @@ opts_chunk$set(tidy.opts=list(width.cutoff=70), tidy=TRUE)
 ## Confounding Variables
 \begin{enumerate}
 \item Population Density. Reflects the role of social distance in airborne propagation. We should in all our comparisons keep this variable as fixed as we can while avoiding the comparison of small sets of data.
-\item All Ages in Poverty (%). Reflects propensity to respect hygiene (notably mask adoption) and social distance rules (living circumstances and ability to stay-at-home).
+\item All Ages in Poverty (\%). Reflects propensity to respect hygiene (notably mask adoption) and social distance rules (living circumstances and ability to stay-at-home).
 \item Median Income. Similar to (2) while an independent variable (poverty rate may be high and median income high or low dependent on the wealth gap).
 \item Percent adult obesity. Reflects propensity to generate respiratory droplets — and observed correlation with COVID infection/symptom severity. 
 \item Voter margin 2020 election. Reflects propensity to wear masks. Independent variable to (7).
