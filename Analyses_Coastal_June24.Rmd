@@ -101,10 +101,10 @@ Pacific coastal counties (bordering the ocean, ie 1st degree) versus Inland Coun
 Gulf coastal counties (bordering the ocean, ie 1st degree) versus Inland Counties (including all counties bordering non-ocean bodies of water).
 
 ```{r}
-model.byregion.cases = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+model.byregion.cases = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + scale(mean_pm25) + scale(mean_summer_rm) + scale(mean_winter_rm), family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
 summary(model.byregion.cases)$coefficients
 
-model.byregion.deaths = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+model.byregion.deaths = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + scale(mean_pm25) + scale(mean_summer_rm) + scale(mean_winter_rm), family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
 summary(model.byregion.deaths)$coefficients
 ```
 \newpage
@@ -116,10 +116,10 @@ Gulf urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  
 ```{r}
 coastal.urban = subset(coastal.new, coastal.new$popdensity >= 1500)
 
-model.byregion.cases.urban = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
+model.byregion.cases.urban = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + scale(mean_pm25) + scale(mean_summer_rm) + scale(mean_winter_rm), family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
 summary(model.byregion.cases.urban)$coefficients
 
-model.byregion.deaths.urban = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
+model.byregion.deaths.urban = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + scale(mean_pm25) + scale(mean_summer_rm) + scale(mean_winter_rm), family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
 summary(model.byregion.deaths.urban)$coefficients
 ```
 \newpage
@@ -131,10 +131,10 @@ Gulf rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  
 ```{r}
 coastal.rural = subset(coastal.new, coastal.new$popdensity < 1500)
 
-model.byregion.cases.rural = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.rural, id = as.factor(state))
+model.byregion.cases.rural = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + scale(mean_pm25) + scale(mean_summer_rm) + scale(mean_winter_rm), family = poisson(link = "log"),  data = coastal.rural, id = as.factor(state))
 summary(model.byregion.cases.rural)$coefficients
 
-model.byregion.deaths.rural = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.rural, id = as.factor(state))
+model.byregion.deaths.rural = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + scale(mean_pm25) + scale(mean_summer_rm) + scale(mean_winter_rm), family = poisson(link = "log"),  data = coastal.rural, id = as.factor(state))
 summary(model.byregion.deaths.rural)$coefficients
 ```
 \newpage
@@ -145,7 +145,7 @@ table(coastal.urban$region)
 table(coastal.rural$region)
 ```
 
-
+## Tables in summary sheet generated with code below
 ```{r eval = F, message = F}
 tab_model(model.byregion.cases, dv.labels = 'Cases (All)', robust = T, digits = 3)
 tab_model(model.byregion.deaths, dv.labels = 'Deaths (All)', robust = T, digits = 3)
@@ -154,6 +154,7 @@ tab_model(model.byregion.deaths.urban, dv.labels = 'Deaths (Urban)', robust = T,
 tab_model(model.byregion.cases.rural, dv.labels = 'Cases (Rural)', robust = T, digits = 3)
 tab_model(model.byregion.deaths.rural, dv.labels = 'Deaths (Rural)', robust = T, digits = 3)
 ```
+
 ## Manually Calculate Confidence Intervals
 ```{r}
 for (i in c(2,3,4)){
