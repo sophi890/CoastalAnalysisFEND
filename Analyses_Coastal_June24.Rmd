@@ -1,0 +1,158 @@
+---
+title: "Coastal Analysis June 24"
+output: pdf_document
+---
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+# Set so that long lines in R will be wrapped:
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=70), tidy=TRUE)
+```
+
+```{r}
+library(readxl)
+library(stringr)
+library(gee)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
+```
+
+\section{Summary}
+## Confounding Variables
+\begin{enumerate}{
+\item Population Density. Reflects the role of social distance in airborne propagation. We should in all our comparisons keep this variable as fixed as we can while avoiding the comparison of small sets of data.
+\item All Ages in Poverty (%). Reflects propensity to respect hygiene (notably mask adoption) and social distance rules (living circumstances and ability to stay-at-home).
+\item Median Income. Similar to (2) while an independent variable (poverty rate may be high and median income high or low dependent on the wealth gap).
+\item Percent adult obesity. Reflects propensity to generate respiratory droplets — and observed correlation with COVID infection/symptom severity. 
+\item Voter margin 2020 election. Reflects propensity to wear masks. Independent variable to (7).
+\item Median age 2019. Reflects propensity to generate respiratory droplets — and observed correlation with COVID infection/symptom severity. 
+\item Voting party in the 2020 presidential election. See (5).
+\item Air pollution (PM 2.5) (Dominici lab data). Reflects propensity to generate respiratory droplets — and observed correlation with COVID infection/symptom severity. Should use 2020 PM 2.5 data if available given the importance of the fire season in 2020.
+\item Mean winter and summer humidity (Dominici lab data). Reflects propensity to generate respiratory droplets — and observed correlation with COVID infection/symptom severity. 
+}
+
+## Analyses
+\begin{itemize}
+\item  Atlantic coastal counties (bordering the ocean, ie 1st degree) versus Inland Counties (including all counties bordering non-ocean bodies of water).
+\item Atlantic urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  urban Counties (including all counties bordering non-ocean bodies of water).
+\item Atlantic rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  rural Counties (including all counties bordering non-ocean bodies of water).
+
+\item Pacific coastal counties (bordering the ocean, ie 1st degree) versus Inland Counties (including all counties bordering non-ocean bodies of water).
+\item Pacific urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  urban Counties (including all counties bordering non-ocean bodies of water).
+\item Pacific rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  rural Counties (including all counties bordering non-ocean bodies of water).
+
+\item Gulf coastal counties (bordering the ocean, ie 1st degree) versus Inland Counties (including all counties bordering non-ocean bodies of water).
+\item Gulf urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  urban Counties (including all counties bordering non-ocean bodies of water).
+\item Gulf rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  rural Counties (including all counties bordering non-ocean bodies of water).
+\end{itemize}
+
+\newpage
+\section{Analyses}
+## Read in data and additional confounding variables from Dominici lab (air pollution 2020 from aqs, humidity from previous Dominici lab confounding set)
+```{r}
+coastal <- read_excel("FIPS-based datasets_05232021.xlsx", sheet = 13)
+load('confounding.Rda')
+pm = read.csv('aqs-pm25-annual-aggregated.csv')
+```
+
+## Create smaller datasets from previous datasets, dataclean, merge with PM25 and humidity data.
+```{r}
+coastal.new = data.frame(coastal$`FIPS as Text`, coastal$state, coastal$cases, coastal$deaths, coastal$`Country REGION`, coastal$`Coastal Distance`, coastal$`Population 2019 Estimate`, coastal$`Population Density`, coastal$`All Ages in Poverty (%)`, coastal$`Median Income`, coastal$`percent adult obesity`, coastal$`diff/total`, coastal$`Politcal alignment 2020 election`, coastal$`median age 2019`)
+colnames(coastal.new) = c('fips', 'state', 'cases', 'deaths', 'region', 'coastal.distance', 'population2019', 'popdensity', 'poverty', 'median_income', 'pct_obesity', 'voter_margin_2020', 'party', 'median_age')
+
+# Change NAs in coastal.distance to level 4, and save as factor with reference level 4.
+coastal.new$coastal.distance[is.na(coastal.new$coastal.distance)] <- 4
+coastal.new$coastal.distance = as.factor(coastal.new$coastal.distance)
+coastal.new <- within(coastal.new, coastal.distance <- relevel(coastal.distance, ref = 4))
+
+# Change NAs in coastal region to Inland, and save as factor with reference level Inland
+coastal.new$region[is.na(coastal.new$region)] <- 'Inland'
+coastal.new$region[coastal.new$region == '0'] <- 'Inland'
+coastal.new$region[coastal.new$coastal.distance != 1] <- 'Inland'
+coastal.new$region = tolower(coastal.new$region)
+coastal.new$region = as.factor(coastal.new$region)
+coastal.new <- within(coastal.new, region <- relevel(region, ref = 'inland'))
+
+# Merge with humidity and mean_pm25
+coastal.new = merge(coastal.new, cbind.data.frame(fips = confounding$fips, mean_pm25 = confounding$mean_pm25, mean_summer_rm = confounding$mean_summer_rm, mean_winter_rm = confounding$mean_winter_rm), by = 'fips')
+
+## Create indicator for being a coast (degree 1) 
+coastal.new$indicatorcoast = ifelse(coastal.new$coastal.distance == '1', 'Coastal', 'NonCoastal')
+coastal.new$indicatorcoast = as.factor(coastal.new$indicatorcoast)
+coastal.new <- within(coastal.new, indicatorcoast <- relevel(indicatorcoast, ref = 'NonCoastal'))
+
+summary(coastal.new)
+```
+
+```{r}
+pm = read.csv('aqs-pm25-annual-aggregated.csv')
+colnames(pm)[4] = 'state'
+pm$fips = paste(str_pad(pm$state_code, 2, pad = '0'), str_pad(pm$fips3, 3, pad = '0'), sep ="")
+```
+
+\newpage
+## Analysis 1, 4, 7: 
+Atlantic coastal counties (bordering the ocean, ie 1st degree) versus Inland Counties (including all counties bordering non-ocean bodies of water).
+Pacific coastal counties (bordering the ocean, ie 1st degree) versus Inland Counties (including all counties bordering non-ocean bodies of water).
+Gulf coastal counties (bordering the ocean, ie 1st degree) versus Inland Counties (including all counties bordering non-ocean bodies of water).
+
+```{r}
+model.byregion.cases = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregion.cases)$coefficients
+
+model.byregion.deaths = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.new, id = as.factor(state))
+summary(model.byregion.deaths)$coefficients
+```
+
+## Analysis 2, 5, 8
+Atlantic urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  urban Counties (including all counties bordering non-ocean bodies of water).
+Pacific urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  urban Counties (including all counties bordering non-ocean bodies of water).
+Gulf urban coastal counties (bordering the ocean, ie 1st degree) versus Inland  urban Counties (including all counties bordering non-ocean bodies of water).
+
+```{r}
+coastal.urban = subset(coastal.new, coastal.new$popdensity >= 1500)
+
+model.byregion.cases.urban = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
+summary(model.byregion.cases)$coefficients
+
+model.byregion.deaths.urban = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.urban, id = as.factor(state))
+summary(model.byregion.deaths)$coefficients
+```
+
+## Analysis 3, 6, 9
+Atlantic rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  rural Counties (including all counties bordering non-ocean bodies of water).
+Pacific rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  rural Counties (including all counties bordering non-ocean bodies of water).
+Gulf rural coastal counties (bordering the ocean, ie 1st degree) versus Inland  rural Counties (including all counties bordering non-ocean bodies of water).
+
+```{r}
+coastal.rural = subset(coastal.new, coastal.new$popdensity < 1500)
+
+model.byregion.cases.rural = gee(cases ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.rural, id = as.factor(state))
+summary(model.byregion.cases)$coefficients
+
+model.byregion.deaths.rural = gee(deaths ~  region + offset(log(population2019)) + scale(popdensity) + scale(poverty) + scale(log(median_income)) + scale(pct_obesity) + scale(voter_margin_2020) + scale(median_age) + factor(party) + mean_pm25 + mean_summer_rm + mean_winter_rm, family = poisson(link = "log"),  data = coastal.rural, id = as.factor(state))
+summary(model.byregion.deaths)$coefficients
+```
+\newpage
+## Some splits
+```{r}
+table(coastal.new$region)
+table(coastal.urban$region)
+table(coastal.rural$region)
+
+```
+
+
+```{r eval = F}
+tab_model(model.byregion.cases, robust = T, digits = 3)
+tab_model(model.byregion.deaths, robust = T, digits = 3)
+tab_model(model.byregion.cases.urban, robust = T, digits = 3)
+tab_model(model.byregion.deaths.urban, robust = T, digits = 3)
+tab_model(model.byregion.cases.rural, robust = T, digits = 3)
+tab_model(model.byregion.deaths.rural, robust = T, digits = 3)
+
+```
+
+
+
+
