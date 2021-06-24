@@ -75,11 +75,10 @@ coastal.new <- within(coastal.new, coastal.distance <- relevel(coastal.distance,
 
 # Change NAs in coastal region to Inland, and save as factor with reference level Inland
 coastal.new$region[is.na(coastal.new$region)] <- 'Inland'
-coastal.new$region[coastal.new$region == '0'] <- 'Inland'
 coastal.new$region[coastal.new$coastal.distance != 1] <- 'Inland'
 coastal.new$region = tolower(coastal.new$region)
+coastal.new$region[coastal.new$region != 'atlantic' & coastal.new$region != 'gulf of mexico' & coastal.new$region != 'pacific' ] = 'inland'
 coastal.new$region = factor(coastal.new$region, levels = c('inland', 'atlantic', 'gulf of mexico', 'pacific'))
-#coastal.new <- within(coastal.new, region <- relevel(region, ref = 'inland'))
 
 ## Create indicator for being a coast (degree 1) 
 coastal.new$indicatorcoast = ifelse(coastal.new$coastal.distance == '1', 'Coastal', 'NonCoastal')
